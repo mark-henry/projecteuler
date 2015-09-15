@@ -1,3 +1,5 @@
+import bisect
+
 class Primes(object):
 	def __init__(self):
 		self.size = 4
@@ -17,9 +19,12 @@ class Primes(object):
 		if number < 2:
 			return False
 		self.expand(number)
-		return number in self.primes
+		index = bisect.bisect_left(self.primes, number)
+		return index != len(self.primes) and self.primes[index] == number
 
-	def expand(self, request):
+	def expand(self, request=None):
+		if not request:
+			request = self.size * 2
 		while self.size <= request:
 			newsize = self.size * 2
 			sieve = [True] * (newsize - self.size)
@@ -50,9 +55,27 @@ class Primes(object):
 			yield self.primes[position]
 			position += 1
 
-	def primes(self):
+	def iprimes(self):
 		position = 0
+		last = 0
 		while True:
-			self.expand(position)
-			yield self.primes[position]
+			if position == len(self.primes):
+				self.expand()
+			last = self.primes[position]
+			yield last
 			position += 1
+
+	def next_prime(self, prev):
+		index = 0
+		self.expand(prev)
+		while True:
+			index = bisect.bisect_left(self.primes, prev)
+			if (index + 1) >= len(self.primes):
+				self.expand()
+			if self.primes[index] >= prev:
+				return self.primes[index + 1]
+
+if __name__ == "__main__":
+	p = Primes()
+	for number in range(10):
+		print(number, "is followed by", p.next_prime(number))

@@ -1,16 +1,18 @@
 import primes
 
-p = primes.Primes()
-ps = list(p.allPrimesBelow(1000000))
-candidates = []
-for index in range(len(ps)):
-	total = 0
-	offset = 0
-	while total < 1000000:
-		total += ps[index + offset]
-		offset += 1
-		if p.isPrime(total):
-			candidates += [(total, offset)]
-			print (total, offset)
+limit = 1000000
 
-print max(candidates)
+p = primes.Primes()
+primes = list(p.allPrimesBelow(limit))
+candidates = []
+for index, prime in enumerate(primes):
+	running_total = 0
+	seq_length = 0
+	while running_total < limit and index+seq_length < len(primes):
+		if p.isPrime(running_total):
+			candidates.append((seq_length, running_total))
+			print (seq_length, running_total)
+		running_total += primes[index + seq_length]
+		seq_length += 1
+
+print(max(candidates))
