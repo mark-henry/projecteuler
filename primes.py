@@ -1,12 +1,15 @@
-import bisect
+import bisect, math
 
 class Primes(object):
-	def __init__(self):
+	def __init__(self, track_factorizations=True):
 		self.size = 4
 		self.primes = [2, 3]
 		self.factorizations = {2:[2], 3:[3], 4:[2,2]}
+		self.track_factorizations = track_factorizations
 
 	def primeFactors(self, number):
+		if not self.track_factorizations:
+			raise ValueError("Not tracking factorizations")
 		if number < 2:
 			return []
 		self.expand(number)
@@ -23,28 +26,26 @@ class Primes(object):
 		return index != len(self.primes) and self.primes[index] == number
 
 	def expand(self, request=None):
-		if not request:
+		if request is None:
 			request = self.size * 2
-		while self.size <= request:
+		while self.size < request:
 			newsize = self.size * 2
-			sieve = [True] * (newsize - self.size)
+			sieve = {}
 			#Apply existing primes to sieve
 			#Simultaneously expand factorizations
 			for prime in self.primes:
-				factor = 2
-				while factor*prime < self.size:
-					factor += 1
+				factor = math.ceil(self.size / prime)
 				while factor*prime < newsize:
-					sieve[factor*prime - self.size] = False
-					self.factorizations[factor*prime] = \
-						[prime] + self.primeFactors(factor)
+					sieve[factor*prime] = True
+					if self.track_factorizations:
+						self.factorizations[factor*prime] = \
+							[prime] + self.primeFactors(factor)
 					factor += 1
 			#Collect new primes
-			for i in range(len(sieve)):
-				if sieve[i] == True:
-					newprime = i + self.size
-					self.primes += [newprime]
-					self.factorizations[newprime] = [newprime]
+			for candidate_prime in range(self.size+1, newsize, 2):
+				if candidate_prime not in sieve:
+					self.primes.append(candidate_prime)
+					self.factorizations[candidate_prime] = [candidate_prime]
 			self.size = newsize
 
 	def allPrimesBelow(self, number):
@@ -60,6 +61,7 @@ class Primes(object):
 		last = 0
 		while True:
 			if position == len(self.primes):
+				print("ech")
 				self.expand()
 			last = self.primes[position]
 			yield last
@@ -76,6 +78,15 @@ class Primes(object):
 				return self.primes[index + 1]
 
 if __name__ == "__main__":
-	p = Primes()
+	p = Primes(False)
 	for number in range(10):
 		print(number, "is followed by", p.next_prime(number))
+	assert not p.isPrime(9)
+	assert p.isPrime(13)
+	assert p.isPrime(17)
+	assert p.isPrime(31)
+	assert p.isPrime(43)
+	for index, prime in enumerate(p.iprimes()):
+		print(index, prime)
+		if index > 10:
+			break
